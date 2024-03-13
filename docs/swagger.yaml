@@ -1,0 +1,93 @@
+definitions:
+  common.Order:
+    enum:
+    - asc
+    - desc
+    type: string
+    x-enum-varnames:
+    - ASC
+    - DESC
+  dto.CreateUserDto:
+    properties:
+      active:
+        type: boolean
+      age:
+        minimum: 18
+        type: integer
+      name:
+        type: string
+    required:
+    - active
+    - age
+    - name
+    type: object
+info:
+  contact: {}
+paths:
+  /user/:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - enum:
+        - asc
+        - desc
+        in: query
+        name: order
+        type: string
+        x-enum-varnames:
+        - ASC
+        - DESC
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: sort
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Get all user
+      tags:
+      - User
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Requesy Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateUserDto'
+      produces:
+      - application/json
+      responses: {}
+      summary: Create user
+      tags:
+      - User
+  /user/{id}:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Get a user
+      tags:
+      - User
+securityDefinitions:
+  Bearer:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
