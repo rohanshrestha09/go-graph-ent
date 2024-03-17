@@ -16,6 +16,140 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/blog/": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Blog"
+                ],
+                "summary": "Get all blog",
+                "parameters": [
+                    {
+                        "enum": [
+                            "asc",
+                            "desc"
+                        ],
+                        "type": "string",
+                        "x-enum-varnames": [
+                            "Asc",
+                            "Desc"
+                        ],
+                        "name": "order",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "userId",
+                        "in": "query"
+                    }
+                ],
+                "responses": {}
+            },
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Blog"
+                ],
+                "summary": "Create blog",
+                "parameters": [
+                    {
+                        "description": "Request Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateBlogDto"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
+        "/blog/{slug}/": {
+            "get": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Blog"
+                ],
+                "summary": "Get a blog",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {}
+            },
+            "patch": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Blog"
+                ],
+                "summary": "Update blog",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "slug",
+                        "name": "slug",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Request Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateBlogDto"
+                        }
+                    }
+                ],
+                "responses": {}
+            }
+        },
         "/user/": {
             "get": {
                 "consumes": [
@@ -36,8 +170,8 @@ const docTemplate = `{
                         ],
                         "type": "string",
                         "x-enum-varnames": [
-                            "ASC",
-                            "DESC"
+                            "Asc",
+                            "Desc"
                         ],
                         "name": "order",
                         "in": "query"
@@ -45,6 +179,11 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "name": "search",
                         "in": "query"
                     },
                     {
@@ -73,7 +212,7 @@ const docTemplate = `{
                 "summary": "Create user",
                 "parameters": [
                     {
-                        "description": "Requesy Body",
+                        "description": "Request Body",
                         "name": "body",
                         "in": "body",
                         "required": true,
@@ -85,7 +224,7 @@ const docTemplate = `{
                 "responses": {}
             }
         },
-        "/user/{id}": {
+        "/user/{id}/": {
             "get": {
                 "consumes": [
                     "application/json"
@@ -107,6 +246,37 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {}
+            },
+            "patch": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "User"
+                ],
+                "summary": "Update user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "id",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Request Body",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.UpdateUserDto"
+                        }
+                    }
+                ],
+                "responses": {}
             }
         }
     },
@@ -118,29 +288,122 @@ const docTemplate = `{
                 "desc"
             ],
             "x-enum-varnames": [
-                "ASC",
-                "DESC"
+                "Asc",
+                "Desc"
             ]
+        },
+        "dto.CreateBlogDto": {
+            "type": "object",
+            "required": [
+                "content",
+                "title",
+                "userId"
+            ],
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "image": {
+                    "type": "string"
+                },
+                "status": {
+                    "enum": [
+                        "PUBLISHED",
+                        "UNPUBLISHED"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/enums.BlogStatus"
+                        }
+                    ]
+                },
+                "title": {
+                    "type": "string"
+                },
+                "userId": {
+                    "type": "string"
+                }
+            }
         },
         "dto.CreateUserDto": {
             "type": "object",
             "required": [
-                "active",
-                "age",
-                "name"
+                "email",
+                "name",
+                "password"
             ],
             "properties": {
                 "active": {
                     "type": "boolean"
                 },
-                "age": {
-                    "type": "integer",
-                    "minimum": 18
+                "email": {
+                    "type": "string"
+                },
+                "image": {
+                    "type": "string"
                 },
                 "name": {
                     "type": "string"
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 8
                 }
             }
+        },
+        "dto.UpdateBlogDto": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "image": {
+                    "type": "string"
+                },
+                "status": {
+                    "enum": [
+                        "PUBLISHED",
+                        "UNPUBLISHED"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/enums.BlogStatus"
+                        }
+                    ]
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.UpdateUserDto": {
+            "type": "object",
+            "properties": {
+                "active": {
+                    "type": "boolean"
+                },
+                "image": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 8
+                }
+            }
+        },
+        "enums.BlogStatus": {
+            "type": "string",
+            "enum": [
+                "PUBLISHED",
+                "UNPUBLISHED"
+            ],
+            "x-enum-varnames": [
+                "Published",
+                "Unpublished"
+            ]
         }
     },
     "securityDefinitions": {

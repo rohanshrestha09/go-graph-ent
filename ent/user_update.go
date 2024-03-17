@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/rohanshrestha09/go-graph-ent/ent/blog"
 	"github.com/rohanshrestha09/go-graph-ent/ent/predicate"
 	"github.com/rohanshrestha09/go-graph-ent/ent/user"
 )
@@ -34,27 +35,6 @@ func (uu *UserUpdate) SetUpdatedAt(t time.Time) *UserUpdate {
 	return uu
 }
 
-// SetAge sets the "age" field.
-func (uu *UserUpdate) SetAge(i int) *UserUpdate {
-	uu.mutation.ResetAge()
-	uu.mutation.SetAge(i)
-	return uu
-}
-
-// SetNillableAge sets the "age" field if the given value is not nil.
-func (uu *UserUpdate) SetNillableAge(i *int) *UserUpdate {
-	if i != nil {
-		uu.SetAge(*i)
-	}
-	return uu
-}
-
-// AddAge adds i to the "age" field.
-func (uu *UserUpdate) AddAge(i int) *UserUpdate {
-	uu.mutation.AddAge(i)
-	return uu
-}
-
 // SetName sets the "name" field.
 func (uu *UserUpdate) SetName(s string) *UserUpdate {
 	uu.mutation.SetName(s)
@@ -65,6 +45,34 @@ func (uu *UserUpdate) SetName(s string) *UserUpdate {
 func (uu *UserUpdate) SetNillableName(s *string) *UserUpdate {
 	if s != nil {
 		uu.SetName(*s)
+	}
+	return uu
+}
+
+// SetEmail sets the "email" field.
+func (uu *UserUpdate) SetEmail(s string) *UserUpdate {
+	uu.mutation.SetEmail(s)
+	return uu
+}
+
+// SetNillableEmail sets the "email" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableEmail(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetEmail(*s)
+	}
+	return uu
+}
+
+// SetPassword sets the "password" field.
+func (uu *UserUpdate) SetPassword(s string) *UserUpdate {
+	uu.mutation.SetPassword(s)
+	return uu
+}
+
+// SetNillablePassword sets the "password" field if the given value is not nil.
+func (uu *UserUpdate) SetNillablePassword(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetPassword(*s)
 	}
 	return uu
 }
@@ -83,9 +91,65 @@ func (uu *UserUpdate) SetNillableActive(b *bool) *UserUpdate {
 	return uu
 }
 
+// SetImage sets the "image" field.
+func (uu *UserUpdate) SetImage(s string) *UserUpdate {
+	uu.mutation.SetImage(s)
+	return uu
+}
+
+// SetNillableImage sets the "image" field if the given value is not nil.
+func (uu *UserUpdate) SetNillableImage(s *string) *UserUpdate {
+	if s != nil {
+		uu.SetImage(*s)
+	}
+	return uu
+}
+
+// ClearImage clears the value of the "image" field.
+func (uu *UserUpdate) ClearImage() *UserUpdate {
+	uu.mutation.ClearImage()
+	return uu
+}
+
+// AddBlogIDs adds the "blogs" edge to the Blog entity by IDs.
+func (uu *UserUpdate) AddBlogIDs(ids ...int) *UserUpdate {
+	uu.mutation.AddBlogIDs(ids...)
+	return uu
+}
+
+// AddBlogs adds the "blogs" edges to the Blog entity.
+func (uu *UserUpdate) AddBlogs(b ...*Blog) *UserUpdate {
+	ids := make([]int, len(b))
+	for i := range b {
+		ids[i] = b[i].ID
+	}
+	return uu.AddBlogIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uu *UserUpdate) Mutation() *UserMutation {
 	return uu.mutation
+}
+
+// ClearBlogs clears all "blogs" edges to the Blog entity.
+func (uu *UserUpdate) ClearBlogs() *UserUpdate {
+	uu.mutation.ClearBlogs()
+	return uu
+}
+
+// RemoveBlogIDs removes the "blogs" edge to Blog entities by IDs.
+func (uu *UserUpdate) RemoveBlogIDs(ids ...int) *UserUpdate {
+	uu.mutation.RemoveBlogIDs(ids...)
+	return uu
+}
+
+// RemoveBlogs removes "blogs" edges to Blog entities.
+func (uu *UserUpdate) RemoveBlogs(b ...*Blog) *UserUpdate {
+	ids := make([]int, len(b))
+	for i := range b {
+		ids[i] = b[i].ID
+	}
+	return uu.RemoveBlogIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -124,20 +188,7 @@ func (uu *UserUpdate) defaults() {
 	}
 }
 
-// check runs all checks and user-defined validators on the builder.
-func (uu *UserUpdate) check() error {
-	if v, ok := uu.mutation.Age(); ok {
-		if err := user.AgeValidator(v); err != nil {
-			return &ValidationError{Name: "age", err: fmt.Errorf(`ent: validator failed for field "User.age": %w`, err)}
-		}
-	}
-	return nil
-}
-
 func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	if err := uu.check(); err != nil {
-		return n, err
-	}
 	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID))
 	if ps := uu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -149,17 +200,68 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value, ok := uu.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if value, ok := uu.mutation.Age(); ok {
-		_spec.SetField(user.FieldAge, field.TypeInt, value)
-	}
-	if value, ok := uu.mutation.AddedAge(); ok {
-		_spec.AddField(user.FieldAge, field.TypeInt, value)
-	}
 	if value, ok := uu.mutation.Name(); ok {
 		_spec.SetField(user.FieldName, field.TypeString, value)
 	}
+	if value, ok := uu.mutation.Email(); ok {
+		_spec.SetField(user.FieldEmail, field.TypeString, value)
+	}
+	if value, ok := uu.mutation.Password(); ok {
+		_spec.SetField(user.FieldPassword, field.TypeString, value)
+	}
 	if value, ok := uu.mutation.Active(); ok {
 		_spec.SetField(user.FieldActive, field.TypeBool, value)
+	}
+	if value, ok := uu.mutation.Image(); ok {
+		_spec.SetField(user.FieldImage, field.TypeString, value)
+	}
+	if uu.mutation.ImageCleared() {
+		_spec.ClearField(user.FieldImage, field.TypeString)
+	}
+	if uu.mutation.BlogsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.BlogsTable,
+			Columns: []string{user.BlogsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(blog.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedBlogsIDs(); len(nodes) > 0 && !uu.mutation.BlogsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.BlogsTable,
+			Columns: []string{user.BlogsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(blog.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.BlogsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.BlogsTable,
+			Columns: []string{user.BlogsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(blog.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -187,27 +289,6 @@ func (uuo *UserUpdateOne) SetUpdatedAt(t time.Time) *UserUpdateOne {
 	return uuo
 }
 
-// SetAge sets the "age" field.
-func (uuo *UserUpdateOne) SetAge(i int) *UserUpdateOne {
-	uuo.mutation.ResetAge()
-	uuo.mutation.SetAge(i)
-	return uuo
-}
-
-// SetNillableAge sets the "age" field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableAge(i *int) *UserUpdateOne {
-	if i != nil {
-		uuo.SetAge(*i)
-	}
-	return uuo
-}
-
-// AddAge adds i to the "age" field.
-func (uuo *UserUpdateOne) AddAge(i int) *UserUpdateOne {
-	uuo.mutation.AddAge(i)
-	return uuo
-}
-
 // SetName sets the "name" field.
 func (uuo *UserUpdateOne) SetName(s string) *UserUpdateOne {
 	uuo.mutation.SetName(s)
@@ -218,6 +299,34 @@ func (uuo *UserUpdateOne) SetName(s string) *UserUpdateOne {
 func (uuo *UserUpdateOne) SetNillableName(s *string) *UserUpdateOne {
 	if s != nil {
 		uuo.SetName(*s)
+	}
+	return uuo
+}
+
+// SetEmail sets the "email" field.
+func (uuo *UserUpdateOne) SetEmail(s string) *UserUpdateOne {
+	uuo.mutation.SetEmail(s)
+	return uuo
+}
+
+// SetNillableEmail sets the "email" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableEmail(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetEmail(*s)
+	}
+	return uuo
+}
+
+// SetPassword sets the "password" field.
+func (uuo *UserUpdateOne) SetPassword(s string) *UserUpdateOne {
+	uuo.mutation.SetPassword(s)
+	return uuo
+}
+
+// SetNillablePassword sets the "password" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillablePassword(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetPassword(*s)
 	}
 	return uuo
 }
@@ -236,9 +345,65 @@ func (uuo *UserUpdateOne) SetNillableActive(b *bool) *UserUpdateOne {
 	return uuo
 }
 
+// SetImage sets the "image" field.
+func (uuo *UserUpdateOne) SetImage(s string) *UserUpdateOne {
+	uuo.mutation.SetImage(s)
+	return uuo
+}
+
+// SetNillableImage sets the "image" field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableImage(s *string) *UserUpdateOne {
+	if s != nil {
+		uuo.SetImage(*s)
+	}
+	return uuo
+}
+
+// ClearImage clears the value of the "image" field.
+func (uuo *UserUpdateOne) ClearImage() *UserUpdateOne {
+	uuo.mutation.ClearImage()
+	return uuo
+}
+
+// AddBlogIDs adds the "blogs" edge to the Blog entity by IDs.
+func (uuo *UserUpdateOne) AddBlogIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.AddBlogIDs(ids...)
+	return uuo
+}
+
+// AddBlogs adds the "blogs" edges to the Blog entity.
+func (uuo *UserUpdateOne) AddBlogs(b ...*Blog) *UserUpdateOne {
+	ids := make([]int, len(b))
+	for i := range b {
+		ids[i] = b[i].ID
+	}
+	return uuo.AddBlogIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (uuo *UserUpdateOne) Mutation() *UserMutation {
 	return uuo.mutation
+}
+
+// ClearBlogs clears all "blogs" edges to the Blog entity.
+func (uuo *UserUpdateOne) ClearBlogs() *UserUpdateOne {
+	uuo.mutation.ClearBlogs()
+	return uuo
+}
+
+// RemoveBlogIDs removes the "blogs" edge to Blog entities by IDs.
+func (uuo *UserUpdateOne) RemoveBlogIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.RemoveBlogIDs(ids...)
+	return uuo
+}
+
+// RemoveBlogs removes "blogs" edges to Blog entities.
+func (uuo *UserUpdateOne) RemoveBlogs(b ...*Blog) *UserUpdateOne {
+	ids := make([]int, len(b))
+	for i := range b {
+		ids[i] = b[i].ID
+	}
+	return uuo.RemoveBlogIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -290,20 +455,7 @@ func (uuo *UserUpdateOne) defaults() {
 	}
 }
 
-// check runs all checks and user-defined validators on the builder.
-func (uuo *UserUpdateOne) check() error {
-	if v, ok := uuo.mutation.Age(); ok {
-		if err := user.AgeValidator(v); err != nil {
-			return &ValidationError{Name: "age", err: fmt.Errorf(`ent: validator failed for field "User.age": %w`, err)}
-		}
-	}
-	return nil
-}
-
 func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
-	if err := uuo.check(); err != nil {
-		return _node, err
-	}
 	_spec := sqlgraph.NewUpdateSpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID))
 	id, ok := uuo.mutation.ID()
 	if !ok {
@@ -332,17 +484,68 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) 
 	if value, ok := uuo.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
 	}
-	if value, ok := uuo.mutation.Age(); ok {
-		_spec.SetField(user.FieldAge, field.TypeInt, value)
-	}
-	if value, ok := uuo.mutation.AddedAge(); ok {
-		_spec.AddField(user.FieldAge, field.TypeInt, value)
-	}
 	if value, ok := uuo.mutation.Name(); ok {
 		_spec.SetField(user.FieldName, field.TypeString, value)
 	}
+	if value, ok := uuo.mutation.Email(); ok {
+		_spec.SetField(user.FieldEmail, field.TypeString, value)
+	}
+	if value, ok := uuo.mutation.Password(); ok {
+		_spec.SetField(user.FieldPassword, field.TypeString, value)
+	}
 	if value, ok := uuo.mutation.Active(); ok {
 		_spec.SetField(user.FieldActive, field.TypeBool, value)
+	}
+	if value, ok := uuo.mutation.Image(); ok {
+		_spec.SetField(user.FieldImage, field.TypeString, value)
+	}
+	if uuo.mutation.ImageCleared() {
+		_spec.ClearField(user.FieldImage, field.TypeString)
+	}
+	if uuo.mutation.BlogsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.BlogsTable,
+			Columns: []string{user.BlogsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(blog.FieldID, field.TypeInt),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedBlogsIDs(); len(nodes) > 0 && !uuo.mutation.BlogsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.BlogsTable,
+			Columns: []string{user.BlogsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(blog.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.BlogsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.BlogsTable,
+			Columns: []string{user.BlogsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(blog.FieldID, field.TypeInt),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &User{config: uuo.config}
 	_spec.Assign = _node.assignValues

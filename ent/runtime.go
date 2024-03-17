@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/rohanshrestha09/go-graph-ent/ent/blog"
-	"github.com/rohanshrestha09/go-graph-ent/ent/project"
 	"github.com/rohanshrestha09/go-graph-ent/ent/schema"
 	"github.com/rohanshrestha09/go-graph-ent/ent/user"
 )
@@ -31,21 +30,6 @@ func init() {
 	blog.DefaultUpdatedAt = blogDescUpdatedAt.Default.(func() time.Time)
 	// blog.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	blog.UpdateDefaultUpdatedAt = blogDescUpdatedAt.UpdateDefault.(func() time.Time)
-	projectMixin := schema.Project{}.Mixin()
-	projectMixinFields0 := projectMixin[0].Fields()
-	_ = projectMixinFields0
-	projectFields := schema.Project{}.Fields()
-	_ = projectFields
-	// projectDescCreatedAt is the schema descriptor for created_at field.
-	projectDescCreatedAt := projectMixinFields0[0].Descriptor()
-	// project.DefaultCreatedAt holds the default value on creation for the created_at field.
-	project.DefaultCreatedAt = projectDescCreatedAt.Default.(func() time.Time)
-	// projectDescUpdatedAt is the schema descriptor for updated_at field.
-	projectDescUpdatedAt := projectMixinFields0[1].Descriptor()
-	// project.DefaultUpdatedAt holds the default value on creation for the updated_at field.
-	project.DefaultUpdatedAt = projectDescUpdatedAt.Default.(func() time.Time)
-	// project.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
-	project.UpdateDefaultUpdatedAt = projectDescUpdatedAt.UpdateDefault.(func() time.Time)
 	userMixin := schema.User{}.Mixin()
 	userMixinFields0 := userMixin[0].Fields()
 	_ = userMixinFields0
@@ -61,16 +45,8 @@ func init() {
 	user.DefaultUpdatedAt = userDescUpdatedAt.Default.(func() time.Time)
 	// user.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	user.UpdateDefaultUpdatedAt = userDescUpdatedAt.UpdateDefault.(func() time.Time)
-	// userDescAge is the schema descriptor for age field.
-	userDescAge := userFields[1].Descriptor()
-	// user.AgeValidator is a validator for the "age" field. It is called by the builders before save.
-	user.AgeValidator = userDescAge.Validators[0].(func(int) error)
-	// userDescName is the schema descriptor for name field.
-	userDescName := userFields[2].Descriptor()
-	// user.DefaultName holds the default value on creation for the name field.
-	user.DefaultName = userDescName.Default.(string)
 	// userDescActive is the schema descriptor for active field.
-	userDescActive := userFields[3].Descriptor()
+	userDescActive := userFields[4].Descriptor()
 	// user.DefaultActive holds the default value on creation for the active field.
 	user.DefaultActive = userDescActive.Default.(bool)
 	// userDescID is the schema descriptor for id field.

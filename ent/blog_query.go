@@ -10,8 +10,10 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
 	"github.com/rohanshrestha09/go-graph-ent/ent/blog"
 	"github.com/rohanshrestha09/go-graph-ent/ent/predicate"
+	"github.com/rohanshrestha09/go-graph-ent/ent/user"
 )
 
 // BlogQuery is the builder for querying Blog entities.
@@ -21,6 +23,8 @@ type BlogQuery struct {
 	order      []blog.OrderOption
 	inters     []Interceptor
 	predicates []predicate.Blog
+	withUser   *UserQuery
+	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -55,6 +59,28 @@ func (bq *BlogQuery) Unique(unique bool) *BlogQuery {
 func (bq *BlogQuery) Order(o ...blog.OrderOption) *BlogQuery {
 	bq.order = append(bq.order, o...)
 	return bq
+}
+
+// QueryUser chains the current query on the "user" edge.
+func (bq *BlogQuery) QueryUser() *UserQuery {
+	query := (&UserClient{config: bq.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := bq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := bq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(blog.Table, blog.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, blog.UserTable, blog.UserColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(bq.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
 }
 
 // First returns the first Blog entity from the query.
@@ -249,10 +275,22 @@ func (bq *BlogQuery) Clone() *BlogQuery {
 		order:      append([]blog.OrderOption{}, bq.order...),
 		inters:     append([]Interceptor{}, bq.inters...),
 		predicates: append([]predicate.Blog{}, bq.predicates...),
+		withUser:   bq.withUser.Clone(),
 		// clone intermediate query.
 		sql:  bq.sql.Clone(),
 		path: bq.path,
 	}
+}
+
+// WithUser tells the query-builder to eager-load the nodes that are connected to
+// the "user" edge. The optional arguments are used to configure the query builder of the edge.
+func (bq *BlogQuery) WithUser(opts ...func(*UserQuery)) *BlogQuery {
+	query := (&UserClient{config: bq.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	bq.withUser = query
+	return bq
 }
 
 // GroupBy is used to group vertices by one or more fields/columns.
@@ -331,15 +369,23 @@ func (bq *BlogQuery) prepareQuery(ctx context.Context) error {
 
 func (bq *BlogQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Blog, error) {
 	var (
-		nodes = []*Blog{}
-		_spec = bq.querySpec()
+		nodes       = []*Blog{}
+		withFKs     = bq.withFKs
+		_spec       = bq.querySpec()
+		loadedTypes = [1]bool{
+			bq.withUser != nil,
+		}
 	)
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, blog.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]any, error) {
 		return (*Blog).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
 		node := &Blog{config: bq.config}
 		nodes = append(nodes, node)
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
 	}
 	for i := range hooks {
@@ -351,7 +397,43 @@ func (bq *BlogQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Blog, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+	if query := bq.withUser; query != nil {
+		if err := bq.loadUser(ctx, query, nodes, nil,
+			func(n *Blog, e *User) { n.Edges.User = e }); err != nil {
+			return nil, err
+		}
+	}
 	return nodes, nil
+}
+
+func (bq *BlogQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*Blog, init func(*Blog), assign func(*Blog, *User)) error {
+	ids := make([]uuid.UUID, 0, len(nodes))
+	nodeids := make(map[uuid.UUID][]*Blog)
+	for i := range nodes {
+		fk := nodes[i].UserID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(user.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "user_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
 }
 
 func (bq *BlogQuery) sqlCount(ctx context.Context) (int, error) {
@@ -378,6 +460,9 @@ func (bq *BlogQuery) querySpec() *sqlgraph.QuerySpec {
 			if fields[i] != blog.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if bq.withUser != nil {
+			_spec.Node.AddColumnOnce(blog.FieldUserID)
 		}
 	}
 	if ps := bq.predicates; len(ps) > 0 {

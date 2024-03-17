@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/google/uuid"
 )
 
@@ -18,14 +19,27 @@ const (
 	FieldCreatedAt = "created_at"
 	// FieldUpdatedAt holds the string denoting the updated_at field in the database.
 	FieldUpdatedAt = "updated_at"
-	// FieldAge holds the string denoting the age field in the database.
-	FieldAge = "age"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// FieldEmail holds the string denoting the email field in the database.
+	FieldEmail = "email"
+	// FieldPassword holds the string denoting the password field in the database.
+	FieldPassword = "password"
 	// FieldActive holds the string denoting the active field in the database.
 	FieldActive = "active"
+	// FieldImage holds the string denoting the image field in the database.
+	FieldImage = "image"
+	// EdgeBlogs holds the string denoting the blogs edge name in mutations.
+	EdgeBlogs = "blogs"
 	// Table holds the table name of the user in the database.
 	Table = "users"
+	// BlogsTable is the table that holds the blogs relation/edge.
+	BlogsTable = "blogs"
+	// BlogsInverseTable is the table name for the Blog entity.
+	// It exists in this package in order to avoid circular dependency with the "blog" package.
+	BlogsInverseTable = "blogs"
+	// BlogsColumn is the table column denoting the blogs relation/edge.
+	BlogsColumn = "user_blogs"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -33,9 +47,11 @@ var Columns = []string{
 	FieldID,
 	FieldCreatedAt,
 	FieldUpdatedAt,
-	FieldAge,
 	FieldName,
+	FieldEmail,
+	FieldPassword,
 	FieldActive,
+	FieldImage,
 }
 
 // ValidColumn reports if the column name is valid (part of the table columns).
@@ -55,10 +71,6 @@ var (
 	DefaultUpdatedAt func() time.Time
 	// UpdateDefaultUpdatedAt holds the default value on update for the "updated_at" field.
 	UpdateDefaultUpdatedAt func() time.Time
-	// AgeValidator is a validator for the "age" field. It is called by the builders before save.
-	AgeValidator func(int) error
-	// DefaultName holds the default value on creation for the "name" field.
-	DefaultName string
 	// DefaultActive holds the default value on creation for the "active" field.
 	DefaultActive bool
 	// DefaultID holds the default value on creation for the "id" field.
@@ -83,17 +95,48 @@ func ByUpdatedAt(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldUpdatedAt, opts...).ToFunc()
 }
 
-// ByAge orders the results by the age field.
-func ByAge(opts ...sql.OrderTermOption) OrderOption {
-	return sql.OrderByField(FieldAge, opts...).ToFunc()
-}
-
 // ByName orders the results by the name field.
 func ByName(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldName, opts...).ToFunc()
 }
 
+// ByEmail orders the results by the email field.
+func ByEmail(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldEmail, opts...).ToFunc()
+}
+
+// ByPassword orders the results by the password field.
+func ByPassword(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldPassword, opts...).ToFunc()
+}
+
 // ByActive orders the results by the active field.
 func ByActive(opts ...sql.OrderTermOption) OrderOption {
 	return sql.OrderByField(FieldActive, opts...).ToFunc()
+}
+
+// ByImage orders the results by the image field.
+func ByImage(opts ...sql.OrderTermOption) OrderOption {
+	return sql.OrderByField(FieldImage, opts...).ToFunc()
+}
+
+// ByBlogsCount orders the results by blogs count.
+func ByBlogsCount(opts ...sql.OrderTermOption) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborsCount(s, newBlogsStep(), opts...)
+	}
+}
+
+// ByBlogs orders the results by blogs terms.
+func ByBlogs(term sql.OrderTerm, terms ...sql.OrderTerm) OrderOption {
+	return func(s *sql.Selector) {
+		sqlgraph.OrderByNeighborTerms(s, newBlogsStep(), append([]sql.OrderTerm{term}, terms...)...)
+	}
+}
+func newBlogsStep() *sqlgraph.Step {
+	return sqlgraph.NewStep(
+		sqlgraph.From(Table, FieldID),
+		sqlgraph.To(BlogsInverseTable, FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, BlogsTable, BlogsColumn),
+	)
 }

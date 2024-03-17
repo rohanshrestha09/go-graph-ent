@@ -5,25 +5,173 @@ definitions:
     - desc
     type: string
     x-enum-varnames:
-    - ASC
-    - DESC
+    - Asc
+    - Desc
+  dto.CreateBlogDto:
+    properties:
+      content:
+        type: string
+      image:
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/enums.BlogStatus'
+        enum:
+        - PUBLISHED
+        - UNPUBLISHED
+      title:
+        type: string
+      userId:
+        type: string
+    required:
+    - content
+    - title
+    - userId
+    type: object
   dto.CreateUserDto:
     properties:
       active:
         type: boolean
-      age:
-        minimum: 18
-        type: integer
+      email:
+        type: string
+      image:
+        type: string
       name:
         type: string
+      password:
+        minLength: 8
+        type: string
     required:
-    - active
-    - age
+    - email
     - name
+    - password
     type: object
+  dto.UpdateBlogDto:
+    properties:
+      content:
+        type: string
+      image:
+        type: string
+      status:
+        allOf:
+        - $ref: '#/definitions/enums.BlogStatus'
+        enum:
+        - PUBLISHED
+        - UNPUBLISHED
+      title:
+        type: string
+    type: object
+  dto.UpdateUserDto:
+    properties:
+      active:
+        type: boolean
+      image:
+        type: string
+      name:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    type: object
+  enums.BlogStatus:
+    enum:
+    - PUBLISHED
+    - UNPUBLISHED
+    type: string
+    x-enum-varnames:
+    - Published
+    - Unpublished
 info:
   contact: {}
 paths:
+  /blog/:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - enum:
+        - asc
+        - desc
+        in: query
+        name: order
+        type: string
+        x-enum-varnames:
+        - Asc
+        - Desc
+      - in: query
+        name: page
+        type: integer
+      - in: query
+        name: search
+        type: string
+      - in: query
+        name: size
+        type: integer
+      - in: query
+        name: sort
+        type: string
+      - in: query
+        name: userId
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Get all blog
+      tags:
+      - Blog
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Request Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateBlogDto'
+      produces:
+      - application/json
+      responses: {}
+      summary: Create blog
+      tags:
+      - Blog
+  /blog/{slug}/:
+    get:
+      consumes:
+      - application/json
+      parameters:
+      - description: slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses: {}
+      summary: Get a blog
+      tags:
+      - Blog
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Request Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateBlogDto'
+      produces:
+      - application/json
+      responses: {}
+      summary: Update blog
+      tags:
+      - Blog
   /user/:
     get:
       consumes:
@@ -36,11 +184,14 @@ paths:
         name: order
         type: string
         x-enum-varnames:
-        - ASC
-        - DESC
+        - Asc
+        - Desc
       - in: query
         name: page
         type: integer
+      - in: query
+        name: search
+        type: string
       - in: query
         name: size
         type: integer
@@ -57,7 +208,7 @@ paths:
       consumes:
       - application/json
       parameters:
-      - description: Requesy Body
+      - description: Request Body
         in: body
         name: body
         required: true
@@ -69,7 +220,7 @@ paths:
       summary: Create user
       tags:
       - User
-  /user/{id}:
+  /user/{id}/:
     get:
       consumes:
       - application/json
@@ -83,6 +234,27 @@ paths:
       - application/json
       responses: {}
       summary: Get a user
+      tags:
+      - User
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Request Body
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateUserDto'
+      produces:
+      - application/json
+      responses: {}
+      summary: Update user
       tags:
       - User
 securityDefinitions:

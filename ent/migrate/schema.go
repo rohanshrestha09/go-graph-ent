@@ -13,33 +13,44 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "title", Type: field.TypeString},
+		{Name: "slug", Type: field.TypeString, Unique: true},
+		{Name: "content", Type: field.TypeString, SchemaType: map[string]string{"mysql": "longtext"}},
+		{Name: "image", Type: field.TypeString, Nullable: true},
+		{Name: "status", Type: field.TypeEnum, Enums: []string{"PUBLISHED", "UNPUBLISHED"}, Default: "PUBLISHED"},
+		{Name: "user_id", Type: field.TypeUUID},
+		{Name: "user_blogs", Type: field.TypeUUID, Nullable: true},
 	}
 	// BlogsTable holds the schema information for the "blogs" table.
 	BlogsTable = &schema.Table{
 		Name:       "blogs",
 		Columns:    BlogsColumns,
 		PrimaryKey: []*schema.Column{BlogsColumns[0]},
-	}
-	// ProjectsColumns holds the columns for the "projects" table.
-	ProjectsColumns = []*schema.Column{
-		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "created_at", Type: field.TypeTime},
-		{Name: "updated_at", Type: field.TypeTime},
-	}
-	// ProjectsTable holds the schema information for the "projects" table.
-	ProjectsTable = &schema.Table{
-		Name:       "projects",
-		Columns:    ProjectsColumns,
-		PrimaryKey: []*schema.Column{ProjectsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "blogs_users_user",
+				Columns:    []*schema.Column{BlogsColumns[8]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+			{
+				Symbol:     "blogs_users_blogs",
+				Columns:    []*schema.Column{BlogsColumns[9]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 	}
 	// UsersColumns holds the columns for the "users" table.
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeUUID},
 		{Name: "created_at", Type: field.TypeTime},
 		{Name: "updated_at", Type: field.TypeTime},
-		{Name: "age", Type: field.TypeInt},
-		{Name: "name", Type: field.TypeString, Default: "unknown"},
+		{Name: "name", Type: field.TypeString},
+		{Name: "email", Type: field.TypeString, Unique: true},
+		{Name: "password", Type: field.TypeString},
 		{Name: "active", Type: field.TypeBool, Default: true},
+		{Name: "image", Type: field.TypeString, Nullable: true},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
@@ -50,10 +61,11 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		BlogsTable,
-		ProjectsTable,
 		UsersTable,
 	}
 )
 
 func init() {
+	BlogsTable.ForeignKeys[0].RefTable = UsersTable
+	BlogsTable.ForeignKeys[1].RefTable = UsersTable
 }

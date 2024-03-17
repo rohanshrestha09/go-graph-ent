@@ -10,7 +10,10 @@ import (
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
+	"github.com/rohanshrestha09/go-graph-ent/common/enums"
 	"github.com/rohanshrestha09/go-graph-ent/ent/blog"
+	"github.com/rohanshrestha09/go-graph-ent/ent/user"
 )
 
 // BlogCreate is the builder for creating a Blog entity.
@@ -46,6 +49,69 @@ func (bc *BlogCreate) SetNillableUpdatedAt(t *time.Time) *BlogCreate {
 		bc.SetUpdatedAt(*t)
 	}
 	return bc
+}
+
+// SetTitle sets the "title" field.
+func (bc *BlogCreate) SetTitle(s string) *BlogCreate {
+	bc.mutation.SetTitle(s)
+	return bc
+}
+
+// SetSlug sets the "slug" field.
+func (bc *BlogCreate) SetSlug(s string) *BlogCreate {
+	bc.mutation.SetSlug(s)
+	return bc
+}
+
+// SetContent sets the "content" field.
+func (bc *BlogCreate) SetContent(s string) *BlogCreate {
+	bc.mutation.SetContent(s)
+	return bc
+}
+
+// SetImage sets the "image" field.
+func (bc *BlogCreate) SetImage(s string) *BlogCreate {
+	bc.mutation.SetImage(s)
+	return bc
+}
+
+// SetNillableImage sets the "image" field if the given value is not nil.
+func (bc *BlogCreate) SetNillableImage(s *string) *BlogCreate {
+	if s != nil {
+		bc.SetImage(*s)
+	}
+	return bc
+}
+
+// SetStatus sets the "status" field.
+func (bc *BlogCreate) SetStatus(es enums.BlogStatus) *BlogCreate {
+	bc.mutation.SetStatus(es)
+	return bc
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (bc *BlogCreate) SetNillableStatus(es *enums.BlogStatus) *BlogCreate {
+	if es != nil {
+		bc.SetStatus(*es)
+	}
+	return bc
+}
+
+// SetUserID sets the "user_id" field.
+func (bc *BlogCreate) SetUserID(u uuid.UUID) *BlogCreate {
+	bc.mutation.SetUserID(u)
+	return bc
+}
+
+// SetID sets the "id" field.
+func (bc *BlogCreate) SetID(i int) *BlogCreate {
+	bc.mutation.SetID(i)
+	return bc
+}
+
+// SetUser sets the "user" edge to the User entity.
+func (bc *BlogCreate) SetUser(u *User) *BlogCreate {
+	return bc.SetUserID(u.ID)
 }
 
 // Mutation returns the BlogMutation object of the builder.
@@ -91,6 +157,10 @@ func (bc *BlogCreate) defaults() {
 		v := blog.DefaultUpdatedAt()
 		bc.mutation.SetUpdatedAt(v)
 	}
+	if _, ok := bc.mutation.Status(); !ok {
+		v := blog.DefaultStatus
+		bc.mutation.SetStatus(v)
+	}
 }
 
 // check runs all checks and user-defined validators on the builder.
@@ -100,6 +170,29 @@ func (bc *BlogCreate) check() error {
 	}
 	if _, ok := bc.mutation.UpdatedAt(); !ok {
 		return &ValidationError{Name: "updated_at", err: errors.New(`ent: missing required field "Blog.updated_at"`)}
+	}
+	if _, ok := bc.mutation.Title(); !ok {
+		return &ValidationError{Name: "title", err: errors.New(`ent: missing required field "Blog.title"`)}
+	}
+	if _, ok := bc.mutation.Slug(); !ok {
+		return &ValidationError{Name: "slug", err: errors.New(`ent: missing required field "Blog.slug"`)}
+	}
+	if _, ok := bc.mutation.Content(); !ok {
+		return &ValidationError{Name: "content", err: errors.New(`ent: missing required field "Blog.content"`)}
+	}
+	if _, ok := bc.mutation.Status(); !ok {
+		return &ValidationError{Name: "status", err: errors.New(`ent: missing required field "Blog.status"`)}
+	}
+	if v, ok := bc.mutation.Status(); ok {
+		if err := blog.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Blog.status": %w`, err)}
+		}
+	}
+	if _, ok := bc.mutation.UserID(); !ok {
+		return &ValidationError{Name: "user_id", err: errors.New(`ent: missing required field "Blog.user_id"`)}
+	}
+	if _, ok := bc.mutation.UserID(); !ok {
+		return &ValidationError{Name: "user", err: errors.New(`ent: missing required edge "Blog.user"`)}
 	}
 	return nil
 }
@@ -115,8 +208,10 @@ func (bc *BlogCreate) sqlSave(ctx context.Context) (*Blog, error) {
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
-	_node.ID = int(id)
+	if _spec.ID.Value != _node.ID {
+		id := _spec.ID.Value.(int64)
+		_node.ID = int(id)
+	}
 	bc.mutation.id = &_node.ID
 	bc.mutation.done = true
 	return _node, nil
@@ -127,6 +222,10 @@ func (bc *BlogCreate) createSpec() (*Blog, *sqlgraph.CreateSpec) {
 		_node = &Blog{config: bc.config}
 		_spec = sqlgraph.NewCreateSpec(blog.Table, sqlgraph.NewFieldSpec(blog.FieldID, field.TypeInt))
 	)
+	if id, ok := bc.mutation.ID(); ok {
+		_node.ID = id
+		_spec.ID.Value = id
+	}
 	if value, ok := bc.mutation.CreatedAt(); ok {
 		_spec.SetField(blog.FieldCreatedAt, field.TypeTime, value)
 		_node.CreatedAt = value
@@ -134,6 +233,43 @@ func (bc *BlogCreate) createSpec() (*Blog, *sqlgraph.CreateSpec) {
 	if value, ok := bc.mutation.UpdatedAt(); ok {
 		_spec.SetField(blog.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if value, ok := bc.mutation.Title(); ok {
+		_spec.SetField(blog.FieldTitle, field.TypeString, value)
+		_node.Title = value
+	}
+	if value, ok := bc.mutation.Slug(); ok {
+		_spec.SetField(blog.FieldSlug, field.TypeString, value)
+		_node.Slug = value
+	}
+	if value, ok := bc.mutation.Content(); ok {
+		_spec.SetField(blog.FieldContent, field.TypeString, value)
+		_node.Content = value
+	}
+	if value, ok := bc.mutation.Image(); ok {
+		_spec.SetField(blog.FieldImage, field.TypeString, value)
+		_node.Image = value
+	}
+	if value, ok := bc.mutation.Status(); ok {
+		_spec.SetField(blog.FieldStatus, field.TypeEnum, value)
+		_node.Status = value
+	}
+	if nodes := bc.mutation.UserIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   blog.UserTable,
+			Columns: []string{blog.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_node.UserID = nodes[0]
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }
@@ -183,7 +319,7 @@ func (bcb *BlogCreateBulk) Save(ctx context.Context) ([]*Blog, error) {
 					return nil, err
 				}
 				mutation.id = &nodes[i].ID
-				if specs[i].ID.Value != nil {
+				if specs[i].ID.Value != nil && nodes[i].ID == 0 {
 					id := specs[i].ID.Value.(int64)
 					nodes[i].ID = int(id)
 				}

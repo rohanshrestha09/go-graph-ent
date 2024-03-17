@@ -13,7 +13,6 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/rohanshrestha09/go-graph-ent/ent/blog"
-	"github.com/rohanshrestha09/go-graph-ent/ent/project"
 	"github.com/rohanshrestha09/go-graph-ent/ent/user"
 )
 
@@ -75,9 +74,8 @@ var (
 func checkColumn(table, column string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			blog.Table:    blog.ValidColumn,
-			project.Table: project.ValidColumn,
-			user.Table:    user.ValidColumn,
+			blog.Table: blog.ValidColumn,
+			user.Table: user.ValidColumn,
 		})
 	})
 	return columnCheck(table, column)

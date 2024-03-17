@@ -22,13 +22,38 @@ type User struct {
 	CreatedAt time.Time `json:"created_at,omitempty"`
 	// UpdatedAt holds the value of the "updated_at" field.
 	UpdatedAt time.Time `json:"updated_at,omitempty"`
-	// Age holds the value of the "age" field.
-	Age int `json:"age,omitempty"`
 	// Name holds the value of the "name" field.
 	Name string `json:"name,omitempty"`
+	// Email holds the value of the "email" field.
+	Email string `json:"email,omitempty"`
+	// Password holds the value of the "password" field.
+	Password string `json:"-"`
 	// Active holds the value of the "active" field.
-	Active       bool `json:"active,omitempty"`
+	Active bool `json:"active,omitempty"`
+	// Image holds the value of the "image" field.
+	Image string `json:"image,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the UserQuery when eager-loading is set.
+	Edges        UserEdges `json:"edges"`
 	selectValues sql.SelectValues
+}
+
+// UserEdges holds the relations/edges for other nodes in the graph.
+type UserEdges struct {
+	// Blogs holds the value of the blogs edge.
+	Blogs []*Blog `json:"blogs,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// BlogsOrErr returns the Blogs value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) BlogsOrErr() ([]*Blog, error) {
+	if e.loadedTypes[0] {
+		return e.Blogs, nil
+	}
+	return nil, &NotLoadedError{edge: "blogs"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -38,9 +63,7 @@ func (*User) scanValues(columns []string) ([]any, error) {
 		switch columns[i] {
 		case user.FieldActive:
 			values[i] = new(sql.NullBool)
-		case user.FieldAge:
-			values[i] = new(sql.NullInt64)
-		case user.FieldName:
+		case user.FieldName, user.FieldEmail, user.FieldPassword, user.FieldImage:
 			values[i] = new(sql.NullString)
 		case user.FieldCreatedAt, user.FieldUpdatedAt:
 			values[i] = new(sql.NullTime)
@@ -79,23 +102,35 @@ func (u *User) assignValues(columns []string, values []any) error {
 			} else if value.Valid {
 				u.UpdatedAt = value.Time
 			}
-		case user.FieldAge:
-			if value, ok := values[i].(*sql.NullInt64); !ok {
-				return fmt.Errorf("unexpected type %T for field age", values[i])
-			} else if value.Valid {
-				u.Age = int(value.Int64)
-			}
 		case user.FieldName:
 			if value, ok := values[i].(*sql.NullString); !ok {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				u.Name = value.String
 			}
+		case user.FieldEmail:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field email", values[i])
+			} else if value.Valid {
+				u.Email = value.String
+			}
+		case user.FieldPassword:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field password", values[i])
+			} else if value.Valid {
+				u.Password = value.String
+			}
 		case user.FieldActive:
 			if value, ok := values[i].(*sql.NullBool); !ok {
 				return fmt.Errorf("unexpected type %T for field active", values[i])
 			} else if value.Valid {
 				u.Active = value.Bool
+			}
+		case user.FieldImage:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field image", values[i])
+			} else if value.Valid {
+				u.Image = value.String
 			}
 		default:
 			u.selectValues.Set(columns[i], values[i])
@@ -108,6 +143,11 @@ func (u *User) assignValues(columns []string, values []any) error {
 // This includes values selected through modifiers, order, etc.
 func (u *User) Value(name string) (ent.Value, error) {
 	return u.selectValues.Get(name)
+}
+
+// QueryBlogs queries the "blogs" edge of the User entity.
+func (u *User) QueryBlogs() *BlogQuery {
+	return NewUserClient(u.config).QueryBlogs(u)
 }
 
 // Update returns a builder for updating this User.
@@ -139,14 +179,19 @@ func (u *User) String() string {
 	builder.WriteString("updated_at=")
 	builder.WriteString(u.UpdatedAt.Format(time.ANSIC))
 	builder.WriteString(", ")
-	builder.WriteString("age=")
-	builder.WriteString(fmt.Sprintf("%v", u.Age))
-	builder.WriteString(", ")
 	builder.WriteString("name=")
 	builder.WriteString(u.Name)
 	builder.WriteString(", ")
+	builder.WriteString("email=")
+	builder.WriteString(u.Email)
+	builder.WriteString(", ")
+	builder.WriteString("password=<sensitive>")
+	builder.WriteString(", ")
 	builder.WriteString("active=")
 	builder.WriteString(fmt.Sprintf("%v", u.Active))
+	builder.WriteString(", ")
+	builder.WriteString("image=")
+	builder.WriteString(u.Image)
 	builder.WriteByte(')')
 	return builder.String()
 }

@@ -1,13 +1,16 @@
 package dto
 
 type CreateUserDto struct {
-	Name   string `json:"name,omitempty" binding:"required" validate:"required"`
-	Age    int    `json:"age,omitempty" binding:"required" validate:"required,gte=18"`
-	Active bool   `json:"active,omitempty" binding:"required" validate:"required"`
+	Name     string `json:"name" binding:"required" validate:"required"`
+	Email    string `json:"email" binding:"required" validate:"required,email"`
+	Password string `json:"password" binding:"required" validate:"required,gte=8"`
+	Active   bool   `json:"active"`
+	Image    string `json:"image"`
 }
 
 type UpdateUserDto struct {
-	Name   string `json:"name,omitempty"`
-	Age    int    `json:"age,omitempty" validate:"omitempty,gte=18"`
-	Active bool   `json:"active,omitempty"`
+	Name     string `json:"name"`
+	Active   bool   `json:"active"`
+	Image    string `json:"image"`
+	Password string `json:"password" validate:"omitempty,gte=8"`
 }

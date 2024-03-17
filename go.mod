@@ -8,6 +8,11 @@ require (
 )
 
 require (
+	github.com/samber/lo v1.39.0 // indirect
+	golang.org/x/exp v0.0.0-20220303212507-bbda1eaf7a17 // indirect
+)
+
+require (
 	ariga.io/atlas v0.19.1-0.20240203083654-5948b60a8e43 // indirect
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/PuerkitoBio/purell v1.1.1 // indirect
@@ -54,6 +59,7 @@ require (
 	github.com/gin-gonic/gin v1.9.1
 	github.com/go-openapi/inflect v0.19.0 // indirect
 	github.com/go-playground/validator v9.31.0+incompatible
+	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/hcl/v2 v2.13.0 // indirect

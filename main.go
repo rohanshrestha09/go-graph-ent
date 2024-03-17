@@ -26,9 +26,9 @@ func init() {
 	}
 }
 
-// @securityDefinitions.apikey	Bearer
-// @in							header
-// @name						Authorization
+//	@securityDefinitions.apikey	Bearer
+//	@in							header
+//	@name						Authorization
 func main() {
 	databaseConfig := configs.GetDatabaseConfig()
 
@@ -57,6 +57,8 @@ func main() {
 	v1 := r.Group("/api/v1")
 
 	modules.InitUserModule(v1.Group("user"), client.User)
+
+	modules.InitBlogModule(v1.Group("blog"), client.Blog)
 
 	docs.SwaggerInfo.Title = "Swagger Example API"
 	docs.SwaggerInfo.Description = "Server."

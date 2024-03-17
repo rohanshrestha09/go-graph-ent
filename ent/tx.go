@@ -14,8 +14,6 @@ type Tx struct {
 	config
 	// Blog is the client for interacting with the Blog builders.
 	Blog *BlogClient
-	// Project is the client for interacting with the Project builders.
-	Project *ProjectClient
 	// User is the client for interacting with the User builders.
 	User *UserClient
 
@@ -150,7 +148,6 @@ func (tx *Tx) Client() *Client {
 
 func (tx *Tx) init() {
 	tx.Blog = NewBlogClient(tx.config)
-	tx.Project = NewProjectClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 }
 

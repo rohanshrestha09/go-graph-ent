@@ -11,8 +11,11 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/google/uuid"
+	"github.com/rohanshrestha09/go-graph-ent/common/enums"
 	"github.com/rohanshrestha09/go-graph-ent/ent/blog"
 	"github.com/rohanshrestha09/go-graph-ent/ent/predicate"
+	"github.com/rohanshrestha09/go-graph-ent/ent/user"
 )
 
 // BlogUpdate is the builder for updating Blog entities.
@@ -34,9 +37,110 @@ func (bu *BlogUpdate) SetUpdatedAt(t time.Time) *BlogUpdate {
 	return bu
 }
 
+// SetTitle sets the "title" field.
+func (bu *BlogUpdate) SetTitle(s string) *BlogUpdate {
+	bu.mutation.SetTitle(s)
+	return bu
+}
+
+// SetNillableTitle sets the "title" field if the given value is not nil.
+func (bu *BlogUpdate) SetNillableTitle(s *string) *BlogUpdate {
+	if s != nil {
+		bu.SetTitle(*s)
+	}
+	return bu
+}
+
+// SetSlug sets the "slug" field.
+func (bu *BlogUpdate) SetSlug(s string) *BlogUpdate {
+	bu.mutation.SetSlug(s)
+	return bu
+}
+
+// SetNillableSlug sets the "slug" field if the given value is not nil.
+func (bu *BlogUpdate) SetNillableSlug(s *string) *BlogUpdate {
+	if s != nil {
+		bu.SetSlug(*s)
+	}
+	return bu
+}
+
+// SetContent sets the "content" field.
+func (bu *BlogUpdate) SetContent(s string) *BlogUpdate {
+	bu.mutation.SetContent(s)
+	return bu
+}
+
+// SetNillableContent sets the "content" field if the given value is not nil.
+func (bu *BlogUpdate) SetNillableContent(s *string) *BlogUpdate {
+	if s != nil {
+		bu.SetContent(*s)
+	}
+	return bu
+}
+
+// SetImage sets the "image" field.
+func (bu *BlogUpdate) SetImage(s string) *BlogUpdate {
+	bu.mutation.SetImage(s)
+	return bu
+}
+
+// SetNillableImage sets the "image" field if the given value is not nil.
+func (bu *BlogUpdate) SetNillableImage(s *string) *BlogUpdate {
+	if s != nil {
+		bu.SetImage(*s)
+	}
+	return bu
+}
+
+// ClearImage clears the value of the "image" field.
+func (bu *BlogUpdate) ClearImage() *BlogUpdate {
+	bu.mutation.ClearImage()
+	return bu
+}
+
+// SetStatus sets the "status" field.
+func (bu *BlogUpdate) SetStatus(es enums.BlogStatus) *BlogUpdate {
+	bu.mutation.SetStatus(es)
+	return bu
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (bu *BlogUpdate) SetNillableStatus(es *enums.BlogStatus) *BlogUpdate {
+	if es != nil {
+		bu.SetStatus(*es)
+	}
+	return bu
+}
+
+// SetUserID sets the "user_id" field.
+func (bu *BlogUpdate) SetUserID(u uuid.UUID) *BlogUpdate {
+	bu.mutation.SetUserID(u)
+	return bu
+}
+
+// SetNillableUserID sets the "user_id" field if the given value is not nil.
+func (bu *BlogUpdate) SetNillableUserID(u *uuid.UUID) *BlogUpdate {
+	if u != nil {
+		bu.SetUserID(*u)
+	}
+	return bu
+}
+
+// SetUser sets the "user" edge to the User entity.
+func (bu *BlogUpdate) SetUser(u *User) *BlogUpdate {
+	return bu.SetUserID(u.ID)
+}
+
 // Mutation returns the BlogMutation object of the builder.
 func (bu *BlogUpdate) Mutation() *BlogMutation {
 	return bu.mutation
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (bu *BlogUpdate) ClearUser() *BlogUpdate {
+	bu.mutation.ClearUser()
+	return bu
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -75,7 +179,23 @@ func (bu *BlogUpdate) defaults() {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (bu *BlogUpdate) check() error {
+	if v, ok := bu.mutation.Status(); ok {
+		if err := blog.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Blog.status": %w`, err)}
+		}
+	}
+	if _, ok := bu.mutation.UserID(); bu.mutation.UserCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Blog.user"`)
+	}
+	return nil
+}
+
 func (bu *BlogUpdate) sqlSave(ctx context.Context) (n int, err error) {
+	if err := bu.check(); err != nil {
+		return n, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(blog.Table, blog.Columns, sqlgraph.NewFieldSpec(blog.FieldID, field.TypeInt))
 	if ps := bu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -86,6 +206,53 @@ func (bu *BlogUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if value, ok := bu.mutation.UpdatedAt(); ok {
 		_spec.SetField(blog.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := bu.mutation.Title(); ok {
+		_spec.SetField(blog.FieldTitle, field.TypeString, value)
+	}
+	if value, ok := bu.mutation.Slug(); ok {
+		_spec.SetField(blog.FieldSlug, field.TypeString, value)
+	}
+	if value, ok := bu.mutation.Content(); ok {
+		_spec.SetField(blog.FieldContent, field.TypeString, value)
+	}
+	if value, ok := bu.mutation.Image(); ok {
+		_spec.SetField(blog.FieldImage, field.TypeString, value)
+	}
+	if bu.mutation.ImageCleared() {
+		_spec.ClearField(blog.FieldImage, field.TypeString)
+	}
+	if value, ok := bu.mutation.Status(); ok {
+		_spec.SetField(blog.FieldStatus, field.TypeEnum, value)
+	}
+	if bu.mutation.UserCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   blog.UserTable,
+			Columns: []string{blog.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := bu.mutation.UserIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   blog.UserTable,
+			Columns: []string{blog.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, bu.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
@@ -113,9 +280,110 @@ func (buo *BlogUpdateOne) SetUpdatedAt(t time.Time) *BlogUpdateOne {
 	return buo
 }
 
+// SetTitle sets the "title" field.
+func (buo *BlogUpdateOne) SetTitle(s string) *BlogUpdateOne {
+	buo.mutation.SetTitle(s)
+	return buo
+}
+
+// SetNillableTitle sets the "title" field if the given value is not nil.
+func (buo *BlogUpdateOne) SetNillableTitle(s *string) *BlogUpdateOne {
+	if s != nil {
+		buo.SetTitle(*s)
+	}
+	return buo
+}
+
+// SetSlug sets the "slug" field.
+func (buo *BlogUpdateOne) SetSlug(s string) *BlogUpdateOne {
+	buo.mutation.SetSlug(s)
+	return buo
+}
+
+// SetNillableSlug sets the "slug" field if the given value is not nil.
+func (buo *BlogUpdateOne) SetNillableSlug(s *string) *BlogUpdateOne {
+	if s != nil {
+		buo.SetSlug(*s)
+	}
+	return buo
+}
+
+// SetContent sets the "content" field.
+func (buo *BlogUpdateOne) SetContent(s string) *BlogUpdateOne {
+	buo.mutation.SetContent(s)
+	return buo
+}
+
+// SetNillableContent sets the "content" field if the given value is not nil.
+func (buo *BlogUpdateOne) SetNillableContent(s *string) *BlogUpdateOne {
+	if s != nil {
+		buo.SetContent(*s)
+	}
+	return buo
+}
+
+// SetImage sets the "image" field.
+func (buo *BlogUpdateOne) SetImage(s string) *BlogUpdateOne {
+	buo.mutation.SetImage(s)
+	return buo
+}
+
+// SetNillableImage sets the "image" field if the given value is not nil.
+func (buo *BlogUpdateOne) SetNillableImage(s *string) *BlogUpdateOne {
+	if s != nil {
+		buo.SetImage(*s)
+	}
+	return buo
+}
+
+// ClearImage clears the value of the "image" field.
+func (buo *BlogUpdateOne) ClearImage() *BlogUpdateOne {
+	buo.mutation.ClearImage()
+	return buo
+}
+
+// SetStatus sets the "status" field.
+func (buo *BlogUpdateOne) SetStatus(es enums.BlogStatus) *BlogUpdateOne {
+	buo.mutation.SetStatus(es)
+	return buo
+}
+
+// SetNillableStatus sets the "status" field if the given value is not nil.
+func (buo *BlogUpdateOne) SetNillableStatus(es *enums.BlogStatus) *BlogUpdateOne {
+	if es != nil {
+		buo.SetStatus(*es)
+	}
+	return buo
+}
+
+// SetUserID sets the "user_id" field.
+func (buo *BlogUpdateOne) SetUserID(u uuid.UUID) *BlogUpdateOne {
+	buo.mutation.SetUserID(u)
+	return buo
+}
+
+// SetNillableUserID sets the "user_id" field if the given value is not nil.
+func (buo *BlogUpdateOne) SetNillableUserID(u *uuid.UUID) *BlogUpdateOne {
+	if u != nil {
+		buo.SetUserID(*u)
+	}
+	return buo
+}
+
+// SetUser sets the "user" edge to the User entity.
+func (buo *BlogUpdateOne) SetUser(u *User) *BlogUpdateOne {
+	return buo.SetUserID(u.ID)
+}
+
 // Mutation returns the BlogMutation object of the builder.
 func (buo *BlogUpdateOne) Mutation() *BlogMutation {
 	return buo.mutation
+}
+
+// ClearUser clears the "user" edge to the User entity.
+func (buo *BlogUpdateOne) ClearUser() *BlogUpdateOne {
+	buo.mutation.ClearUser()
+	return buo
 }
 
 // Where appends a list predicates to the BlogUpdate builder.
@@ -167,7 +435,23 @@ func (buo *BlogUpdateOne) defaults() {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (buo *BlogUpdateOne) check() error {
+	if v, ok := buo.mutation.Status(); ok {
+		if err := blog.StatusValidator(v); err != nil {
+			return &ValidationError{Name: "status", err: fmt.Errorf(`ent: validator failed for field "Blog.status": %w`, err)}
+		}
+	}
+	if _, ok := buo.mutation.UserID(); buo.mutation.UserCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Blog.user"`)
+	}
+	return nil
+}
+
 func (buo *BlogUpdateOne) sqlSave(ctx context.Context) (_node *Blog, err error) {
+	if err := buo.check(); err != nil {
+		return _node, err
+	}
 	_spec := sqlgraph.NewUpdateSpec(blog.Table, blog.Columns, sqlgraph.NewFieldSpec(blog.FieldID, field.TypeInt))
 	id, ok := buo.mutation.ID()
 	if !ok {
@@ -195,6 +479,53 @@ func (buo *BlogUpdateOne) sqlSave(ctx context.Context) (_node *Blog, err error) 
 	}
 	if value, ok := buo.mutation.UpdatedAt(); ok {
 		_spec.SetField(blog.FieldUpdatedAt, field.TypeTime, value)
+	}
+	if value, ok := buo.mutation.Title(); ok {
+		_spec.SetField(blog.FieldTitle, field.TypeString, value)
+	}
+	if value, ok := buo.mutation.Slug(); ok {
+		_spec.SetField(blog.FieldSlug, field.TypeString, value)
+	}
+	if value, ok := buo.mutation.Content(); ok {
+		_spec.SetField(blog.FieldContent, field.TypeString, value)
+	}
+	if value, ok := buo.mutation.Image(); ok {
+		_spec.SetField(blog.FieldImage, field.TypeString, value)
+	}
+	if buo.mutation.ImageCleared() {
+		_spec.ClearField(blog.FieldImage, field.TypeString)
+	}
+	if value, ok := buo.mutation.Status(); ok {
+		_spec.SetField(blog.FieldStatus, field.TypeEnum, value)
+	}
+	if buo.mutation.UserCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   blog.UserTable,
+			Columns: []string{blog.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := buo.mutation.UserIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   blog.UserTable,
+			Columns: []string{blog.UserColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(user.FieldID, field.TypeUUID),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	_node = &Blog{config: buo.config}
 	_spec.Assign = _node.assignValues

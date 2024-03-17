@@ -14,12 +14,13 @@ type UserRepository struct {
 	UserClient *ent.UserClient
 }
 
-func toDomain(user *ent.User) User {
-	return User{
+func (UserRepository) toDomain(user *ent.User) *User {
+	return &User{
 		ID:        user.ID,
 		Name:      user.Name,
-		Age:       user.Age,
+		Email:     user.Email,
 		Active:    user.Active,
+		Image:     user.Image,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 	}
@@ -31,22 +32,31 @@ func NewUserRepository(uc *ent.UserClient) *UserRepository {
 	}
 }
 
-func (ur *UserRepository) FindUser(ctx context.Context, u User) (User, error) {
+func (ur *UserRepository) FindUser(ctx context.Context, u User) (*User, error) {
 	user, err := ur.
 		UserClient.
 		Query().
-		Where(user.Or(user.ID(u.ID))).
+		Where(
+			user.Or(
+				user.ID(u.ID),
+				user.Email(u.Email),
+			),
+		).
 		Only(ctx)
 
 	if err != nil {
-		return User{}, err
+		return &User{}, err
 	}
 
-	return toDomain(user), err
+	return ur.toDomain(user), err
 }
 
-func (ur *UserRepository) FindUsers(ctx context.Context, u User, pagination common.Pagination) ([]User, int, error) {
+func (ur *UserRepository) FindUsers(ctx context.Context, u User, q common.Query) ([]*User, int, error) {
 	query := []predicate.User{}
+
+	if q.Search != "" {
+		query = append(query, user.NameContainsFold(q.Search))
+	}
 
 	count, err := ur.
 		UserClient.
@@ -55,59 +65,79 @@ func (ur *UserRepository) FindUsers(ctx context.Context, u User, pagination comm
 		Count(ctx)
 
 	if err != nil {
-		return []User{}, count, err
+		return []*User{}, count, err
 	}
 
-	order := ent.Asc(pagination.Sort)
+	order := ent.Asc(q.Sort)
 
-	if pagination.Order == common.DESC {
-		order = ent.Desc(pagination.Sort)
+	if q.Order == common.Desc {
+		order = ent.Desc(q.Sort)
 	}
 
 	users, err := ur.
 		UserClient.
 		Query().
 		Where(query...).
-		Offset((pagination.Page - 1) * pagination.Size).
-		Limit(pagination.Size).
+		Offset((q.Page - 1) * q.Size).
+		Limit(q.Size).
 		Order(order).
-		All(context.Background())
+		All(ctx)
 
 	if err != nil {
-		return []User{}, count, err
+		return []*User{}, count, err
 	}
 
-	data := []User{}
+	data := []*User{}
 
 	for _, user := range users {
-		data = append(data, toDomain(user))
+		data = append(data, ur.toDomain(user))
 	}
 
 	return data, count, err
 }
 
-func (ur *UserRepository) CreateUser(ctx context.Context, u *User) (User, error) {
+func (ur *UserRepository) CreateUser(ctx context.Context, u *User) (*User, error) {
 	user, err := ur.
 		UserClient.
 		Create().
 		SetName(u.Name).
-		SetAge(u.Age).
+		SetEmail(u.Email).
+		SetPassword(u.Password).
+		SetImage(u.Image).
+		SetActive(u.Active).
 		Save(ctx)
 
 	if err != nil {
-		return User{}, err
+		return &User{}, err
 	}
 
-	return toDomain(user), err
+	return ur.toDomain(user), err
 }
 
-func (ur *UserRepository) UpdateUser(ctx context.Context, u *User) (User, error) {
-	user, err := ur.
+func (ur *UserRepository) UpdateUser(ctx context.Context, condition User, u *User) (*User, error) {
+	executeUpdate := ur.
 		UserClient.
-		UpdateOneID(u.ID).
-		SetName(u.Name).
-		SetAge(u.Age).
+		UpdateOneID(condition.ID)
+
+	if u.Name != "" {
+		executeUpdate.SetName(u.Name)
+	}
+
+	if u.Password != "" {
+		executeUpdate.SetPassword(u.Password)
+	}
+
+	if u.Image != "" {
+		executeUpdate.SetImage(u.Image)
+	}
+
+	user, err := executeUpdate.
+		SetActive(u.Active).
 		Save(ctx)
 
-	return toDomain(user), err
+	if err != nil {
+		return &User{}, err
+	}
+
+	return ur.toDomain(user), err
 }
