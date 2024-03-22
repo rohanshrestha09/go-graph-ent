@@ -7,6 +7,48 @@ definitions:
     x-enum-varnames:
     - Asc
     - Desc
+  domains.Blog:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: string
+      id:
+        type: integer
+      image:
+        type: string
+      slug:
+        type: string
+      status:
+        $ref: '#/definitions/enums.BlogStatus'
+      title:
+        type: string
+      updatedAt:
+        type: string
+      user:
+        $ref: '#/definitions/domains.User'
+      userId:
+        type: string
+    type: object
+  domains.User:
+    properties:
+      active:
+        type: boolean
+      createdAt:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      image:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      updatedAt:
+        type: string
+    type: object
   dto.CreateBlogDto:
     properties:
       content:
@@ -45,6 +87,50 @@ definitions:
     - email
     - name
     - password
+    type: object
+  dto.PaginatedResponse-domains_Blog:
+    properties:
+      count:
+        type: integer
+      currentPage:
+        type: integer
+      message:
+        type: string
+      result:
+        items:
+          $ref: '#/definitions/domains.Blog'
+        type: array
+      totalPage:
+        type: integer
+    type: object
+  dto.PaginatedResponse-domains_User:
+    properties:
+      count:
+        type: integer
+      currentPage:
+        type: integer
+      message:
+        type: string
+      result:
+        items:
+          $ref: '#/definitions/domains.User'
+        type: array
+      totalPage:
+        type: integer
+    type: object
+  dto.Response-domains_Blog:
+    properties:
+      data:
+        $ref: '#/definitions/domains.Blog'
+      message:
+        type: string
+    type: object
+  dto.Response-domains_User:
+    properties:
+      data:
+        $ref: '#/definitions/domains.User'
+      message:
+        type: string
     type: object
   dto.UpdateBlogDto:
     properties:
@@ -115,7 +201,11 @@ paths:
         type: string
       produces:
       - application/json
-      responses: {}
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.PaginatedResponse-domains_Blog'
       summary: Get all blog
       tags:
       - Blog
@@ -131,7 +221,11 @@ paths:
           $ref: '#/definitions/dto.CreateBlogDto'
       produces:
       - application/json
-      responses: {}
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.Response-domains_Blog'
       summary: Create blog
       tags:
       - Blog
@@ -147,7 +241,11 @@ paths:
         type: string
       produces:
       - application/json
-      responses: {}
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.Response-domains_Blog'
       summary: Get a blog
       tags:
       - Blog
@@ -168,7 +266,11 @@ paths:
           $ref: '#/definitions/dto.UpdateBlogDto'
       produces:
       - application/json
-      responses: {}
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.Response-domains_Blog'
       summary: Update blog
       tags:
       - Blog
@@ -200,7 +302,11 @@ paths:
         type: string
       produces:
       - application/json
-      responses: {}
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.PaginatedResponse-domains_User'
       summary: Get all user
       tags:
       - User
@@ -216,7 +322,11 @@ paths:
           $ref: '#/definitions/dto.CreateUserDto'
       produces:
       - application/json
-      responses: {}
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.Response-domains_User'
       summary: Create user
       tags:
       - User
@@ -232,7 +342,11 @@ paths:
         type: string
       produces:
       - application/json
-      responses: {}
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.Response-domains_User'
       summary: Get a user
       tags:
       - User
@@ -253,7 +367,11 @@ paths:
           $ref: '#/definitions/dto.UpdateUserDto'
       produces:
       - application/json
-      responses: {}
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.Response-domains_User'
       summary: Update user
       tags:
       - User

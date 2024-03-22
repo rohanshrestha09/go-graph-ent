@@ -14,7 +14,7 @@ type UserRepository struct {
 	UserClient *ent.UserClient
 }
 
-func (UserRepository) toDomain(user *ent.User) *User {
+func toUserDomain(user *ent.User) *User {
 	return &User{
 		ID:        user.ID,
 		Name:      user.Name,
@@ -48,7 +48,7 @@ func (ur *UserRepository) FindUser(ctx context.Context, u User) (*User, error) {
 		return &User{}, err
 	}
 
-	return ur.toDomain(user), err
+	return toUserDomain(user), err
 }
 
 func (ur *UserRepository) FindUsers(ctx context.Context, u User, q common.Query) ([]*User, int, error) {
@@ -90,7 +90,7 @@ func (ur *UserRepository) FindUsers(ctx context.Context, u User, q common.Query)
 	data := []*User{}
 
 	for _, user := range users {
-		data = append(data, ur.toDomain(user))
+		data = append(data, toUserDomain(user))
 	}
 
 	return data, count, err
@@ -111,7 +111,7 @@ func (ur *UserRepository) CreateUser(ctx context.Context, u *User) (*User, error
 		return &User{}, err
 	}
 
-	return ur.toDomain(user), err
+	return toUserDomain(user), err
 }
 
 func (ur *UserRepository) UpdateUser(ctx context.Context, condition User, u *User) (*User, error) {
@@ -139,5 +139,5 @@ func (ur *UserRepository) UpdateUser(ctx context.Context, condition User, u *Use
 		return &User{}, err
 	}
 
-	return ur.toDomain(user), err
+	return toUserDomain(user), err
 }

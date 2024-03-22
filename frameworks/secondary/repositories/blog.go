@@ -15,7 +15,7 @@ type BlogRepository struct {
 	BlogClient *ent.BlogClient
 }
 
-func (BlogRepository) toDomain(blog *ent.Blog) *Blog {
+func toBlogDomain(blog *ent.Blog) *Blog {
 	b := &Blog{
 		ID:        blog.ID,
 		Title:     blog.Title,
@@ -29,8 +29,7 @@ func (BlogRepository) toDomain(blog *ent.Blog) *Blog {
 	}
 
 	if blog.Edges.User != nil {
-		b.User = UserRepository{}.
-			toDomain(blog.Edges.User)
+		b.User = toUserDomain(blog.Edges.User)
 	}
 
 	return b
@@ -58,7 +57,7 @@ func (br *BlogRepository) FindBlog(ctx context.Context, b Blog) (*Blog, error) {
 		return &Blog{}, err
 	}
 
-	return br.toDomain(blog), err
+	return toBlogDomain(blog), err
 }
 
 func (br *BlogRepository) FindBlogs(ctx context.Context, b Blog, q common.Query) ([]*Blog, int, error) {
@@ -107,7 +106,7 @@ func (br *BlogRepository) FindBlogs(ctx context.Context, b Blog, q common.Query)
 	data := []*Blog{}
 
 	for _, blog := range blogs {
-		data = append(data, br.toDomain(blog))
+		data = append(data, toBlogDomain(blog))
 	}
 
 	return data, count, err
@@ -129,7 +128,7 @@ func (br *BlogRepository) CreateBlog(ctx context.Context, b *Blog) (*Blog, error
 		return &Blog{}, err
 	}
 
-	return br.toDomain(blog), err
+	return toBlogDomain(blog), err
 }
 
 func (br *BlogRepository) UpdateBlog(ctx context.Context, condition Blog, b *Blog) (*Blog, error) {
@@ -171,5 +170,5 @@ func (br *BlogRepository) UpdateBlog(ctx context.Context, condition Blog, b *Blo
 		return &Blog{}, err
 	}
 
-	return br.toDomain(blog), err
+	return toBlogDomain(blog), err
 }

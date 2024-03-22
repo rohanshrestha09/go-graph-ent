@@ -34,24 +34,31 @@ func NewUserController(r *gin.RouterGroup, ur ports.UserRepository) {
 //	@Tags		User
 //	@Accept		json
 //	@Produce	json
-//	@Param		id	path	string	true	"id"
+//	@Param		id	path		string	true	"id"
+//	@Success	200	{object}	dto.Response[User]
 //	@Router		/user/{id}/ [get]
 func (uc *UserController) GetUser(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
+		ctx.JSON(http.StatusBadRequest,
+			dto.NewErrorResponse(
+				err.Error(), http.StatusBadRequest,
+			))
 		return
 	}
 
 	user, err := uc.UserRepository.FindUser(ctx, User{ID: id})
 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
+		ctx.JSON(http.StatusBadRequest,
+			dto.NewErrorResponse(
+				err.Error(), http.StatusBadRequest,
+			))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, map[string]any{"data": user})
+	ctx.JSON(http.StatusOK, dto.NewResponse("User fetched", user))
 }
 
 // Get All User godoc
@@ -60,7 +67,8 @@ func (uc *UserController) GetUser(ctx *gin.Context) {
 //	@Tags		User
 //	@Accept		json
 //	@Produce	json
-//	@Param		pagination	query	common.Query	false	"Query"
+//	@Param		pagination	query		common.Query	false	"Query"
+//	@Success	200			{object}	dto.PaginatedResponse[User]
 //	@Router		/user/ [get]
 func (uc *UserController) GetUsers(ctx *gin.Context) {
 	var query common.Query
@@ -68,18 +76,32 @@ func (uc *UserController) GetUsers(ctx *gin.Context) {
 	err := ctx.BindQuery(&query)
 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
+		ctx.JSON(http.StatusBadRequest,
+			dto.NewErrorResponse(
+				err.Error(), http.StatusBadRequest,
+			))
 		return
 	}
 
 	users, count, err := uc.UserRepository.FindUsers(ctx, User{}, query)
 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
+		ctx.JSON(http.StatusBadRequest,
+			dto.NewErrorResponse(
+				err.Error(), http.StatusBadRequest,
+			))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"data": users, "count": count})
+	ctx.JSON(http.StatusOK, dto.NewPaginatedResponse(
+		dto.PaginatedResponse[*User]{
+			Message: "Users Fetched",
+			Result:  users,
+			Count:   count,
+		},
+		query.Page,
+		query.Size,
+	))
 }
 
 // Create User godoc
@@ -88,25 +110,35 @@ func (uc *UserController) GetUsers(ctx *gin.Context) {
 //	@Tags		User
 //	@Accept		json
 //	@Produce	json
-//	@Param		body	body	dto.CreateUserDto	true	"Request Body"
+//	@Param		body	body		dto.CreateUserDto	true	"Request Body"
+//	@Success	201		{object}	dto.Response[User]
 //	@Router		/user/ [post]
 func (uc *UserController) CreateUser(ctx *gin.Context) {
 	var createUserDto dto.CreateUserDto
 
 	if err := ctx.BindJSON(&createUserDto); err != nil {
-		ctx.JSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusUnprocessableEntity,
+			dto.NewErrorResponse(
+				err.Error(), http.StatusUnprocessableEntity,
+			))
 		return
 	}
 
 	if err := validator.New().Struct(createUserDto); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadRequest,
+			dto.NewErrorResponse(
+				err.Error(), http.StatusBadGateway,
+			))
 		return
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(createUserDto.Password), bcrypt.DefaultCost)
 
 	if err != nil {
-		ctx.JSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusUnprocessableEntity,
+			dto.NewErrorResponse(
+				err.Error(), http.StatusUnprocessableEntity,
+			))
 		return
 	}
 
@@ -121,11 +153,14 @@ func (uc *UserController) CreateUser(ctx *gin.Context) {
 	})
 
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusInternalServerError,
+			dto.NewErrorResponse(
+				err.Error(), http.StatusInternalServerError,
+			))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"data": user})
+	ctx.JSON(http.StatusCreated, dto.NewResponse("User updated", user))
 }
 
 // Update User godoc
@@ -134,26 +169,36 @@ func (uc *UserController) CreateUser(ctx *gin.Context) {
 //	@Tags		User
 //	@Accept		json
 //	@Produce	json
-//	@Param		id		path	string				true	"id"
-//	@Param		body	body	dto.UpdateUserDto	true	"Request Body"
+//	@Param		id		path		string				true	"id"
+//	@Param		body	body		dto.UpdateUserDto	true	"Request Body"
+//	@Success	201		{object}	dto.Response[User]
 //	@Router		/user/{id}/ [patch]
 func (uc *UserController) UpdateUser(ctx *gin.Context) {
 	id, err := uuid.Parse(ctx.Param("id"))
 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
+		ctx.JSON(http.StatusBadRequest,
+			dto.NewErrorResponse(
+				err.Error(), http.StatusBadRequest,
+			))
 		return
 	}
 
 	var updateUserDto dto.UpdateUserDto
 
 	if err := ctx.BindJSON(&updateUserDto); err != nil {
-		ctx.JSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusUnprocessableEntity,
+			dto.NewErrorResponse(
+				err.Error(), http.StatusUnprocessableEntity,
+			))
 		return
 	}
 
 	if err := validator.New().Struct(updateUserDto); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadRequest,
+			dto.NewErrorResponse(
+				err.Error(), http.StatusBadRequest,
+			))
 		return
 	}
 
@@ -161,7 +206,10 @@ func (uc *UserController) UpdateUser(ctx *gin.Context) {
 		hash, err := bcrypt.GenerateFromPassword([]byte(updateUserDto.Password), bcrypt.DefaultCost)
 
 		if err != nil {
-			ctx.JSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
+			ctx.JSON(http.StatusUnprocessableEntity,
+				dto.NewErrorResponse(
+					err.Error(), http.StatusUnprocessableEntity,
+				))
 			return
 		}
 
@@ -181,9 +229,12 @@ func (uc *UserController) UpdateUser(ctx *gin.Context) {
 		})
 
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusInternalServerError,
+			dto.NewErrorResponse(
+				err.Error(), http.StatusInternalServerError,
+			))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"data": user})
+	ctx.JSON(http.StatusCreated, dto.NewResponse("User updated", user))
 }

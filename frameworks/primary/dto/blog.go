@@ -6,7 +6,7 @@ import (
 )
 
 type QueryBlogDto struct {
-	common.Query
+	*common.Query
 	UserID string `form:"userId"`
 }
 

@@ -34,7 +34,8 @@ func NewBlogController(r *gin.RouterGroup, br ports.BlogRepository) {
 //	@Tags		Blog
 //	@Accept		json
 //	@Produce	json
-//	@Param		slug	path	string	true	"slug"
+//	@Param		slug	path		string	true	"slug"
+//	@Success	200		{object}	dto.Response[Blog]
 //	@Router		/blog/{slug}/ [get]
 func (uc *BlogController) GetBlog(ctx *gin.Context) {
 	slug := ctx.Param("slug")
@@ -42,11 +43,14 @@ func (uc *BlogController) GetBlog(ctx *gin.Context) {
 	blog, err := uc.BlogRepository.FindBlog(ctx, Blog{Slug: slug})
 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
+		ctx.JSON(http.StatusBadRequest,
+			dto.NewErrorResponse(
+				err.Error(), http.StatusBadRequest,
+			))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, map[string]any{"data": blog})
+	ctx.JSON(http.StatusOK, dto.NewResponse("Blog Fetched", blog))
 }
 
 // Get All Blog godoc
@@ -55,7 +59,8 @@ func (uc *BlogController) GetBlog(ctx *gin.Context) {
 //	@Tags		Blog
 //	@Accept		json
 //	@Produce	json
-//	@Param		query	query	dto.QueryBlogDto	false	"Query"
+//	@Param		query	query		dto.QueryBlogDto	false	"Query"
+//	@Success	200		{object}	dto.PaginatedResponse[Blog]
 //	@Router		/blog/ [get]
 func (bc *BlogController) GetBlogs(ctx *gin.Context) {
 	var query dto.QueryBlogDto
@@ -63,7 +68,10 @@ func (bc *BlogController) GetBlogs(ctx *gin.Context) {
 	err := ctx.BindQuery(&query)
 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
+		ctx.JSON(http.StatusBadRequest,
+			dto.NewErrorResponse(
+				err.Error(), http.StatusBadRequest,
+			))
 		return
 	}
 
@@ -73,7 +81,10 @@ func (bc *BlogController) GetBlogs(ctx *gin.Context) {
 		userId, err = uuid.Parse(query.UserID)
 
 		if err != nil {
-			ctx.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
+			ctx.JSON(http.StatusBadRequest,
+				dto.NewErrorResponse(
+					err.Error(), http.StatusBadRequest,
+				))
 			return
 		}
 	}
@@ -93,11 +104,22 @@ func (bc *BlogController) GetBlogs(ctx *gin.Context) {
 	)
 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
+		ctx.JSON(http.StatusBadRequest,
+			dto.NewErrorResponse(
+				err.Error(), http.StatusBadRequest,
+			))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"data": blogs, "count": count})
+	ctx.JSON(http.StatusOK, dto.NewPaginatedResponse(
+		dto.PaginatedResponse[*Blog]{
+			Message: "Blogs Fetched",
+			Result:  blogs,
+			Count:   count,
+		},
+		query.Page,
+		query.Size,
+	))
 }
 
 // Create Blog godoc
@@ -106,25 +128,35 @@ func (bc *BlogController) GetBlogs(ctx *gin.Context) {
 //	@Tags		Blog
 //	@Accept		json
 //	@Produce	json
-//	@Param		body	body	dto.CreateBlogDto	true	"Request Body"
+//	@Param		body	body		dto.CreateBlogDto	true	"Request Body"
+//	@Success	201		{object}	dto.Response[Blog]
 //	@Router		/blog/ [post]
 func (bc *BlogController) CreateBlog(ctx *gin.Context) {
 	var createBlogDto dto.CreateBlogDto
 
 	if err := ctx.BindJSON(&createBlogDto); err != nil {
-		ctx.JSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusUnprocessableEntity,
+			dto.NewErrorResponse(
+				err.Error(), http.StatusUnprocessableEntity,
+			))
 		return
 	}
 
 	if err := validator.New().Struct(createBlogDto); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadRequest,
+			dto.NewErrorResponse(
+				err.Error(), http.StatusBadRequest,
+			))
 		return
 	}
 
 	userId, err := uuid.Parse(createBlogDto.UserID)
 
 	if err != nil {
-		ctx.JSON(http.StatusBadRequest, map[string]string{"message": err.Error()})
+		ctx.JSON(http.StatusBadRequest,
+			dto.NewErrorResponse(
+				err.Error(), http.StatusBadRequest,
+			))
 		return
 	}
 
@@ -138,11 +170,14 @@ func (bc *BlogController) CreateBlog(ctx *gin.Context) {
 	})
 
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusInternalServerError,
+			dto.NewErrorResponse(
+				err.Error(), http.StatusInternalServerError,
+			))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"data": blog})
+	ctx.JSON(http.StatusCreated, dto.NewResponse("Blog Created", blog))
 }
 
 // Update Blog godoc
@@ -151,8 +186,9 @@ func (bc *BlogController) CreateBlog(ctx *gin.Context) {
 //	@Tags		Blog
 //	@Accept		json
 //	@Produce	json
-//	@Param		slug	path	string				true	"slug"
-//	@Param		body	body	dto.UpdateBlogDto	true	"Request Body"
+//	@Param		slug	path		string				true	"slug"
+//	@Param		body	body		dto.UpdateBlogDto	true	"Request Body"
+//	@Success	201		{object}	dto.Response[Blog]
 //	@Router		/blog/{slug}/ [patch]
 func (bc *BlogController) UpdateBlog(ctx *gin.Context) {
 	slug := ctx.Param("slug")
@@ -160,12 +196,16 @@ func (bc *BlogController) UpdateBlog(ctx *gin.Context) {
 	var updateBlogDto dto.UpdateBlogDto
 
 	if err := ctx.BindJSON(&updateBlogDto); err != nil {
-		ctx.JSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusUnprocessableEntity, dto.NewErrorResponse(
+			err.Error(), http.StatusUnprocessableEntity,
+		))
 		return
 	}
 
 	if err := validator.New().Struct(updateBlogDto); err != nil {
-		ctx.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusBadRequest, dto.NewErrorResponse(
+			err.Error(), http.StatusBadRequest,
+		))
 		return
 	}
 
@@ -182,9 +222,12 @@ func (bc *BlogController) UpdateBlog(ctx *gin.Context) {
 		})
 
 	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		ctx.JSON(http.StatusInternalServerError,
+			dto.NewErrorResponse(
+				err.Error(), http.StatusInternalServerError,
+			))
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{"data": blog})
+	ctx.JSON(http.StatusCreated, dto.NewResponse("Blog Updated", blog))
 }
